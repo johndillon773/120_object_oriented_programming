@@ -97,7 +97,6 @@ class Player
     set_name
     @score = 0
     @history = history
-    @first_move = true
   end
 
   def select_move(choice)
@@ -127,7 +126,7 @@ class Human < Player
     choice = nil
     loop do
       puts "Please choose rock, paper, scissors, lizard or spock:"
-      choice = gets.chomp
+      choice = gets.chomp.downcase
       break if Move::VALUES.include? choice
       puts "Sorry, invalid choice."
     end
@@ -247,8 +246,12 @@ class RPSGame
                  Number5.new(history)].sample
   end
 
+  def clear_screen
+    system('clear') || system('cls')
+  end
+
   def display_welcome_message
-    system("clear")
+    clear_screen
     puts "Hi #{human.name}, welcome to Rock, Paper, Scissors, Lizard, Spock!"
     sleep(1)
     puts "You'll be playing against #{computer.name}."
@@ -268,7 +271,7 @@ class RPSGame
   end
 
   def display_moves
-    system("clear")
+    clear_screen
     puts "#{human.name} chose #{human.move}"
     sleep(1)
     puts "#{computer.name} chose #{computer.move}"
@@ -307,7 +310,7 @@ class RPSGame
   end
 
   def display_score
-    system("clear")
+    clear_screen
     puts "Score:"
     puts "#{human.name}: #{human.score}"
     puts "#{computer.name}: #{computer.score}"
@@ -342,13 +345,11 @@ class RPSGame
     answer = nil
     loop do
       puts "Would you like to play again? (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include? answer.downcase
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include? answer
       puts "Sorry, must be y or n."
     end
-
-    return false if answer.downcase == 'n'
-    return true if answer.downcase == 'y'
+    answer.downcase == 'y'
   end
 
   def record_move
@@ -359,13 +360,11 @@ class RPSGame
     answer = nil
     loop do
       puts "Would you like to see a history of all moves played? (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include? answer.downcase
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include? answer
       puts "Sorry, must be y or n."
     end
-
-    return false if answer.downcase == 'n'
-    return true if answer.downcase == 'y'
+    answer == 'y'
   end
 
   def headings
@@ -376,7 +375,7 @@ class RPSGame
   end
 
   def display_history
-    system("clear")
+    clear_screen
     line_break = '-' * headings.length
 
     puts headings
