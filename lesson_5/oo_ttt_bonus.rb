@@ -45,6 +45,7 @@ class Board
         end
         winning_square = winning_line.keys.first
       end
+      break if winning_square
     end
     winning_square
   end
@@ -60,9 +61,7 @@ class Board
   def winning_marker
     WINNING_LINES.each do |line|
       squares = @squares.values_at(*line)
-      if three_identical_markers?(squares)
-        return squares.first.marker
-      end
+      return squares.first.marker if three_identical_markers?(squares)
     end
     nil
   end
@@ -126,6 +125,17 @@ class Player
     @score = 0
     @name = %w[Hal R2D2 Chappie C3PO].sample
   end
+
+  def set_name
+    player_name = nil
+    puts "Please enter your name:"
+    loop do
+      player_name = gets.chomp
+      break if player_name =~ /\w/
+      puts "Please enter at least one alphanumeric character."
+    end
+    self.name = player_name
+  end
 end
 
 class TTTGame
@@ -140,11 +150,12 @@ class TTTGame
     @human = Player.new(HUMAN_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
     @current_marker = nil
+    @first_to_move = nil
   end
 
   # rubocop:disable Metrics/MethodLength
   def play
-    set_name
+    human.set_name
     display_welcome_message
     choose_game_settings
 
@@ -175,18 +186,44 @@ class TTTGame
       current_player_moves
       break if board.someone_won? || board.full?
       clear_screen_and_display_board
+      alternate_player
     end
   end
 
-  def set_name
-    player_name = nil
-    puts "Please enter your name:"
-    loop do
-      player_name = gets.chomp
-      break if player_name =~ /\w/
-      puts "Please enter at least one alphanumeric character."
+  def current_player_moves
+    case @current_marker
+    when human.marker
+      human_moves
+    else
+      computer_moves
     end
-    human.name = player_name
+  end
+
+  def alternate_player
+    case @current_marker
+    when human.marker
+      @current_marker = computer.marker
+    else
+      @current_marker = human.marker
+    end
+  end
+
+  def human_moves
+    puts "Choose a square (#{joiner(board.unmarked_keys)}) "
+    square = nil
+    loop do
+      square = gets.chomp.to_i
+      break if board.unmarked_keys.include?(square)
+      puts "Sorry, that's not a valid choice."
+    end
+
+    board[square] = human.marker
+  end
+
+  def computer_moves
+    square = board.best_move(computer.marker, human.marker)
+
+    board[square] = computer.marker
   end
 
   def choose_game_settings
@@ -207,11 +244,12 @@ class TTTGame
   end
 
   def set_first_to_move
-    @current_marker = case FIRST_TO_MOVE
+    @first_to_move = case FIRST_TO_MOVE
                       when :player then human.marker
                       when :computer then computer.marker
                       when :choose then choose_first_to_move
                       end
+    @current_marker = @first_to_move
   end
 
   def choose_first_to_move
@@ -291,34 +329,6 @@ class TTTGame
     end
   end
 
-  def human_moves
-    puts "Choose a square (#{joiner(board.unmarked_keys)}) "
-    square = nil
-    loop do
-      square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-      puts "Sorry, that's not a valid choice."
-    end
-
-    board[square] = human.marker
-  end
-
-  def computer_moves
-    square = board.best_move(computer.marker, human.marker)
-
-    board[square] = computer.marker
-  end
-
-  def current_player_moves
-    if @current_marker == human.marker
-      human_moves
-      @current_marker = computer.marker
-    else
-      computer_moves
-      @current_marker = human.marker
-    end
-  end
-
   def display_result
     display_board
     display_winner
@@ -359,7 +369,7 @@ class TTTGame
 
   def reset
     board.reset
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = @first_to_move
     clear
   end
 
