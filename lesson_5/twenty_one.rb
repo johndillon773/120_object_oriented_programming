@@ -31,11 +31,12 @@ end
 class Participant
   include Hand
 
-  attr_accessor :cards, :name
+  attr_accessor :cards, :name, :score
 
   def initialize
     @cards = []
     @name = set_name
+    @score = 0
   end
 end
 
@@ -61,7 +62,7 @@ class Player < Participant
     loop do
       puts "What is your name?"
       name = gets.chomp
-      break unless name.empty?
+      break if name.match(/\w/)
       puts "Sorry, please enter a value."
     end
     name
@@ -145,6 +146,7 @@ class TwentyOne
       player_turn
       sleep(1)
       dealer_turn unless player.busted?
+      increment_score
       show_result
       sleep(1)
       break unless play_again?
@@ -162,7 +164,7 @@ class TwentyOne
         puts "You chose to hit."
         hit(player)
         sleep(1)
-        show_cards
+        show_initial_cards
         break if player.busted?
       else
         puts "You chose to stay at #{player.total}."
@@ -203,7 +205,7 @@ class TwentyOne
   end
 
   def clear
-    system "clear"
+    system "clear" || system('cls')
   end
 
   def deal_cards
@@ -251,6 +253,15 @@ class TwentyOne
     end
   end
 
+  def increment_score
+    case result
+    when :dealer_busted then player.score += 1
+    when :player_busted then dealer.score += 1
+    when :dealer_won    then dealer.score += 1
+    when :player_won    then player.score += 1
+    end
+  end
+
   def show_result
     case result
     when :dealer_busted then puts "Dealer busted! You won!"
@@ -259,6 +270,10 @@ class TwentyOne
     when :player_won    then puts "You won!"
     when :tie           then puts "It's a tie!"
     end
+    puts ''
+    puts "Score:"
+    puts "#{player.name}: #{player.score}"
+    puts "#{dealer.name}: #{dealer.score}"
   end
 
   def reset
